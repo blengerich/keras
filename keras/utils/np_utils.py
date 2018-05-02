@@ -6,7 +6,7 @@ from __future__ import print_function
 import numpy as np
 
 
-def to_categorical(y, num_classes=None):
+def to_categorical(y, num_classes=None, zero_indexed=True):
     """Converts a class vector (integers) to binary class matrix.
 
     E.g. for use with categorical_crossentropy.
@@ -15,6 +15,8 @@ def to_categorical(y, num_classes=None):
         y: class vector to be converted into a matrix
             (integers from 0 to num_classes).
         num_classes: total number of classes.
+        zero_indexed: whether y has been processed so that
+            used values are [0,...,np.max(y)]
 
     # Returns
         A binary matrix representation of the input.
@@ -24,11 +26,17 @@ def to_categorical(y, num_classes=None):
     if input_shape and input_shape[-1] == 1 and len(input_shape) > 1:
         input_shape = tuple(input_shape[:-1])
     y = y.ravel()
+    if not zero_indexed:
+        vals_idx = {val: i for i, val in enumerate(set(y))}
+        num_classes = len(list(vals_idx.keys()))
     if not num_classes:
         num_classes = np.max(y) + 1
     n = y.shape[0]
     categorical = np.zeros((n, num_classes), dtype=np.float32)
-    categorical[np.arange(n), y] = 1
+    if zero_indexed:
+        categorical[np.arange(n), y] = 1
+    else:
+        categorical[np.arange(n), vals_idx[y]] = 1
     output_shape = input_shape + (num_classes,)
     categorical = np.reshape(categorical, output_shape)
     return categorical
